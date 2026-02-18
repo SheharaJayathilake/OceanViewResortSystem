@@ -1,0 +1,30 @@
+# Eclipse files
+.settings/
+.classpath
+.project
+.metadata/
+
+# Build output
+target/
+build/
+bin/
+
+# Compiled files
+*.class
+
+# Log files
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE specific
+*.iml
+.idea/
+
+# Maven
+.mvn/
+
+
+src/main/resources/database.properties
