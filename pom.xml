@@ -36,7 +36,7 @@
             <scope>test</scope>
         </dependency>
         
-        <!-- JSON Serialization (Optional) -->
+        <!-- JSON Serialization -->
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
