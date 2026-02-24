@@ -8,29 +8,34 @@ import com.oceanview.dao.impl.*;
  */
 public class DAOFactory {
     private static DAOFactory instance;
-    
-    private DAOFactory() {}
-    
+
+    private DAOFactory() {
+    }
+
     public static synchronized DAOFactory getInstance() {
         if (instance == null) {
             instance = new DAOFactory();
         }
         return instance;
     }
-    
+
     public UserDAOImpl getUserDAO() {
         return new UserDAOImpl();
     }
-    
+
     public GuestDAOImpl getGuestDAO() {
         return new GuestDAOImpl();
     }
-    
+
     public ReservationDAOImpl getReservationDAO() {
         return new ReservationDAOImpl();
     }
-    
+
     public RoomTypeDAOImpl getRoomTypeDAO() {
         return new RoomTypeDAOImpl();
+    }
+
+    public PaymentDAOImpl getPaymentDAO() {
+        return new PaymentDAOImpl();
     }
 }

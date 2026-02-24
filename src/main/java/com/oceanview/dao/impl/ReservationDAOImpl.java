@@ -98,7 +98,9 @@ public class ReservationDAOImpl implements BaseDAO<Reservation, Integer> {
     }
 
     /**
-     * Calculate bill using stored procedure
+     * Calculate bill using stored procedure with automatic fallback.
+     * Attempts the stored procedure first; if it does not exist,
+     * falls back to an equivalent inline SQL calculation.
      */
     public BigDecimal calculateBillWithStoredProcedure(Integer reservationId) throws DAOException {
         Connection conn = null;
@@ -117,16 +119,74 @@ public class ReservationDAOImpl implements BaseDAO<Reservation, Integer> {
             BigDecimal totalAmount = cstmt.getBigDecimal(2);
             int numberOfNights = cstmt.getInt(3);
 
-            LOGGER.info(String.format("Bill calculated: ID=%d, Amount=%.2f, Nights=%d",
+            LOGGER.info(String.format("Bill calculated via stored procedure: ID=%d, Amount=%.2f, Nights=%d",
                     reservationId, totalAmount, numberOfNights));
 
             return totalAmount;
 
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Error calculating bill", e);
-            throw new DAOException("Failed to calculate bill: " + e.getMessage(), e);
+            LOGGER.warning("Stored procedure unavailable, using fallback calculation: " + e.getMessage());
+            closeResources(null, cstmt, conn);
+            conn = null;
+            cstmt = null;
+            return calculateBillFallback(reservationId);
         } finally {
             closeResources(null, cstmt, conn);
+        }
+    }
+
+    /**
+     * Fallback bill calculation using plain SQL when stored procedure is
+     * unavailable.
+     * Computes total as DATEDIFF(check_out, check_in) * rate_per_night and
+     * persists the result back to the reservations table.
+     */
+    private BigDecimal calculateBillFallback(Integer reservationId) throws DAOException {
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+
+        try {
+            conn = connectionManager.getConnection();
+
+            String sql = "SELECT DATEDIFF(r.check_out_date, r.check_in_date) AS nights, "
+                    + "rt.rate_per_night, "
+                    + "(DATEDIFF(r.check_out_date, r.check_in_date) * rt.rate_per_night) AS total "
+                    + "FROM reservations r "
+                    + "JOIN room_types rt ON r.room_type_id = rt.room_type_id "
+                    + "WHERE r.reservation_id = ?";
+
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, reservationId);
+            rs = pstmt.executeQuery();
+
+            if (rs.next()) {
+                BigDecimal totalAmount = rs.getBigDecimal("total");
+                int nights = rs.getInt("nights");
+
+                // Update the reservation record with calculated amount
+                closeResources(rs, pstmt, null);
+                rs = null;
+                pstmt = null;
+
+                String updateSql = "UPDATE reservations SET total_amount = ? WHERE reservation_id = ?";
+                pstmt = conn.prepareStatement(updateSql);
+                pstmt.setBigDecimal(1, totalAmount);
+                pstmt.setInt(2, reservationId);
+                pstmt.executeUpdate();
+
+                LOGGER.info(String.format("Bill calculated via fallback: ID=%d, Amount=%.2f, Nights=%d",
+                        reservationId, totalAmount, nights));
+                return totalAmount;
+            }
+
+            throw new DAOException("Reservation not found for bill calculation: ID=" + reservationId);
+
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Fallback bill calculation failed", e);
+            throw new DAOException("Failed to calculate bill: " + e.getMessage(), e);
+        } finally {
+            closeResources(rs, pstmt, conn);
         }
     }
 

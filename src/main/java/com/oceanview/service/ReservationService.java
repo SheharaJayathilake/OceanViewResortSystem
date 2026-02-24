@@ -1,6 +1,7 @@
 package com.oceanview.service;
 
 import com.oceanview.dao.impl.*;
+import com.oceanview.dao.impl.PaymentDAOImpl;
 import com.oceanview.model.*;
 import com.oceanview.exception.BusinessException;
 import com.oceanview.exception.DAOException;
@@ -24,13 +25,16 @@ public class ReservationService {
     private final ReservationDAOImpl reservationDAO;
     private final GuestDAOImpl guestDAO;
     private final RoomTypeDAOImpl roomTypeDAO;
+    private final PaymentDAOImpl paymentDAO;
 
     public ReservationService(ReservationDAOImpl reservationDAO,
             GuestDAOImpl guestDAO,
-            RoomTypeDAOImpl roomTypeDAO) {
+            RoomTypeDAOImpl roomTypeDAO,
+            PaymentDAOImpl paymentDAO) {
         this.reservationDAO = reservationDAO;
         this.guestDAO = guestDAO;
         this.roomTypeDAO = roomTypeDAO;
+        this.paymentDAO = paymentDAO;
     }
 
     /**
@@ -247,33 +251,68 @@ public class ReservationService {
     }
 
     /**
-     * Process payment for reservation
-     * 
+     * Process payment for a reservation with full transaction recording.
+     * Calculates the bill, validates the payment, records a row in the
+     * payments table, and updates the reservation payment status based
+     * on total amount paid vs total amount owed.
+     *
      * @param reservationNumber Reservation number
-     * @return true if payment successful
-     * @throws BusinessException if payment fails
+     * @param paymentMethod     CASH, CREDIT_CARD, DEBIT_CARD, or ONLINE
+     * @param transactionRef    Transaction reference (card/online payments)
+     * @param processedByUserId User ID of the staff processing the payment
+     * @return true if payment recorded successfully
+     * @throws BusinessException if validation or recording fails
      */
-    public boolean payReservation(String reservationNumber) throws BusinessException {
+    public boolean payReservation(String reservationNumber, String paymentMethod,
+            String transactionRef, int processedByUserId) throws BusinessException {
         try {
             Reservation reservation = findReservationByNumber(reservationNumber);
 
-            // Generate bill to make sure total_amount is calculated in the database
-            calculateBill(reservationNumber);
-
-            // Validate that we can pay
             if (reservation.getStatus() == Reservation.ReservationStatus.CANCELLED) {
-                throw new BusinessException("Cannot process payment for cancelled reservation");
+                throw new BusinessException("Cannot process payment for a cancelled reservation");
             }
 
             if (reservation.getPaymentStatus() == Reservation.PaymentStatus.PAID) {
-                throw new BusinessException("Reservation is already paid");
+                throw new BusinessException("This reservation is already fully paid");
             }
 
-            reservation.setPaymentStatus(Reservation.PaymentStatus.PAID);
+            if (paymentMethod == null || paymentMethod.trim().isEmpty()) {
+                throw new BusinessException("Payment method is required");
+            }
+
+            ReservationBill bill = calculateBill(reservationNumber);
+            BigDecimal totalOwed = bill.getTotalAmount();
+
+            BigDecimal alreadyPaid = paymentDAO.getTotalPaid(reservation.getReservationId());
+            BigDecimal amountDue = totalOwed.subtract(alreadyPaid);
+
+            if (amountDue.compareTo(BigDecimal.ZERO) <= 0) {
+                reservation.setPaymentStatus(Reservation.PaymentStatus.PAID);
+                reservationDAO.update(reservation);
+                throw new BusinessException("No outstanding balance — reservation is already fully paid");
+            }
+
+            paymentDAO.recordPayment(
+                    reservation.getReservationId(),
+                    amountDue,
+                    paymentMethod,
+                    transactionRef,
+                    processedByUserId);
+
+            BigDecimal newTotalPaid = paymentDAO.getTotalPaid(reservation.getReservationId());
+
+            if (newTotalPaid.compareTo(totalOwed) >= 0) {
+                reservation.setPaymentStatus(Reservation.PaymentStatus.PAID);
+            } else {
+                reservation.setPaymentStatus(Reservation.PaymentStatus.PARTIAL);
+            }
+
             boolean updated = reservationDAO.update(reservation);
 
             if (updated) {
-                LOGGER.info(String.format("Payment processed for reservation %s", reservationNumber));
+                LOGGER.info(String.format(
+                        "Payment of %.2f recorded for reservation %s via %s. Status: %s",
+                        amountDue, reservationNumber, paymentMethod, reservation.getPaymentStatus()));
             }
 
             return updated;

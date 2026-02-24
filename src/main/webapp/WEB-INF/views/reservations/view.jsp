@@ -238,20 +238,84 @@
                                                                                                                 (reservation.getPaymentStatus()
                                                                                                                 !=Reservation.PaymentStatus.PAID)
                                                                                                                 { %>
-                                                                                                                <form
-                                                                                                                    action="${pageContext.request.contextPath}/reservations/update-status/<%= reservation.getReservationNumber() %>"
-                                                                                                                    method="post"
-                                                                                                                    style="display: inline;">
-                                                                                                                    <input
-                                                                                                                        type="hidden"
-                                                                                                                        name="action"
-                                                                                                                        value="pay">
-                                                                                                                    <button
-                                                                                                                        type="submit"
-                                                                                                                        class="btn btn-primary"
-                                                                                                                        style="background-color: #28a745; margin-left:10px;">Process
-                                                                                                                        Payment</button>
-                                                                                                                </form>
+                                                                                                                <div
+                                                                                                                    style="margin-top: 15px; padding: 15px; border: 1px solid #ddd; border-radius: 6px; background: #f9f9f9;">
+                                                                                                                    <h4
+                                                                                                                        style="margin: 0 0 10px 0; font-size: 14px; letter-spacing: 0.05em;">
+                                                                                                                        PROCESS
+                                                                                                                        PAYMENT
+                                                                                                                    </h4>
+                                                                                                                    <form
+                                                                                                                        action="${pageContext.request.contextPath}/reservations/update-status/<%= reservation.getReservationNumber() %>"
+                                                                                                                        method="post">
+                                                                                                                        <input
+                                                                                                                            type="hidden"
+                                                                                                                            name="action"
+                                                                                                                            value="pay">
+                                                                                                                        <div
+                                                                                                                            style="display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end;">
+                                                                                                                            <div
+                                                                                                                                style="flex: 1; min-width: 140px;">
+                                                                                                                                <label
+                                                                                                                                    style="display: block; font-size: 12px; margin-bottom: 4px; font-weight: 600;">Payment
+                                                                                                                                    Method
+                                                                                                                                    *</label>
+                                                                                                                                <select
+                                                                                                                                    name="paymentMethod"
+                                                                                                                                    required
+                                                                                                                                    class="form-control"
+                                                                                                                                    style="width: 100%; padding: 6px 8px;">
+                                                                                                                                    <option
+                                                                                                                                        value="">
+                                                                                                                                        --
+                                                                                                                                        Select
+                                                                                                                                        --
+                                                                                                                                    </option>
+                                                                                                                                    <option
+                                                                                                                                        value="CASH">
+                                                                                                                                        Cash
+                                                                                                                                    </option>
+                                                                                                                                    <option
+                                                                                                                                        value="CREDIT_CARD">
+                                                                                                                                        Credit
+                                                                                                                                        Card
+                                                                                                                                    </option>
+                                                                                                                                    <option
+                                                                                                                                        value="DEBIT_CARD">
+                                                                                                                                        Debit
+                                                                                                                                        Card
+                                                                                                                                    </option>
+                                                                                                                                    <option
+                                                                                                                                        value="ONLINE">
+                                                                                                                                        Online
+                                                                                                                                        Transfer
+                                                                                                                                    </option>
+                                                                                                                                </select>
+                                                                                                                            </div>
+                                                                                                                            <div
+                                                                                                                                style="flex: 1; min-width: 140px;">
+                                                                                                                                <label
+                                                                                                                                    style="display: block; font-size: 12px; margin-bottom: 4px; font-weight: 600;">Transaction
+                                                                                                                                    Ref</label>
+                                                                                                                                <input
+                                                                                                                                    type="text"
+                                                                                                                                    name="transactionRef"
+                                                                                                                                    class="form-control"
+                                                                                                                                    placeholder="e.g. TXN-12345"
+                                                                                                                                    style="width: 100%; padding: 6px 8px;">
+                                                                                                                            </div>
+                                                                                                                            <div>
+                                                                                                                                <button
+                                                                                                                                    type="submit"
+                                                                                                                                    class="btn btn-primary"
+                                                                                                                                    style="background-color: #28a745; white-space: nowrap;">
+                                                                                                                                    Process
+                                                                                                                                    Payment
+                                                                                                                                </button>
+                                                                                                                            </div>
+                                                                                                                        </div>
+                                                                                                                    </form>
+                                                                                                                </div>
                                                                                                                 <% } %>
 
                                                                                                                     <% }

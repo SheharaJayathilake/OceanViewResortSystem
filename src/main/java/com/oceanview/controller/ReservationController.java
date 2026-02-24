@@ -247,8 +247,13 @@ public class ReservationController extends BaseController {
                     break;
 
                 case "pay":
-                    updated = reservationService.payReservation(reservationNumber);
-                    setSuccessMessage(request, "Payment processed successfully");
+                    String paymentMethod = request.getParameter("paymentMethod");
+                    String transactionRef = request.getParameter("transactionRef");
+                    com.oceanview.model.User currentUser = getCurrentUser(request);
+                    int processedBy = (currentUser != null) ? currentUser.getUserId() : 0;
+                    updated = reservationService.payReservation(
+                            reservationNumber, paymentMethod, transactionRef, processedBy);
+                    setSuccessMessage(request, "Payment processed successfully via " + paymentMethod);
                     break;
 
                 default:
