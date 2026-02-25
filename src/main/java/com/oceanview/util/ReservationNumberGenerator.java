@@ -9,14 +9,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  * Generates unique reservation numbers with format: RES-YYYYMMDD-XXXX
  */
 public class ReservationNumberGenerator {
-    private static final AtomicInteger counter = new AtomicInteger(1000);
-    private static final DateTimeFormatter DATE_FORMAT = 
-        DateTimeFormatter.ofPattern("yyyyMMdd");
-    
+    // Initialize with a time-based value instead of 1000 to prevent collisions
+    // across JVM restarts (especially during testing)
+    private static final AtomicInteger counter = new AtomicInteger(
+            1000 + (int) (System.currentTimeMillis() % 8999));
+    private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyyMMdd");
+
     private ReservationNumberGenerator() {
         throw new UnsupportedOperationException("Utility class");
     }
-    
+
     public static synchronized String generate() {
         String datePart = LocalDateTime.now().format(DATE_FORMAT);
         int sequence = counter.getAndIncrement();
