@@ -490,4 +490,33 @@ public class ReservationDAOImpl implements BaseDAO<Reservation, Integer> {
         }
     }
 
+    /**
+     * Count active reservations (PENDING, CONFIRMED, CHECKED_IN) for a given room
+     * type.
+     * Uses a targeted SQL COUNT query instead of loading all reservations into
+     * memory.
+     */
+    public long countActiveByRoomType(int roomTypeId) throws DAOException {
+        String sql = "SELECT COUNT(*) FROM reservations " +
+                "WHERE room_type_id = ? AND status IN ('PENDING', 'CONFIRMED', 'CHECKED_IN')";
+        Connection conn = null;
+        PreparedStatement pstmt = null;
+        ResultSet rs = null;
+        try {
+            conn = connectionManager.getConnection();
+            pstmt = conn.prepareStatement(sql);
+            pstmt.setInt(1, roomTypeId);
+            rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getLong(1);
+            }
+            return 0;
+        } catch (SQLException e) {
+            LOGGER.log(Level.SEVERE, "Error counting active reservations for room type " + roomTypeId, e);
+            throw new DAOException("Failed to count active reservations: " + e.getMessage(), e);
+        } finally {
+            closeResources(rs, pstmt, conn);
+        }
+    }
+
 }

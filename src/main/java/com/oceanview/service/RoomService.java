@@ -3,7 +3,6 @@ package com.oceanview.service;
 import com.oceanview.dao.impl.RoomTypeDAOImpl;
 import com.oceanview.dao.impl.ReservationDAOImpl;
 import com.oceanview.model.RoomType;
-import com.oceanview.model.Reservation;
 import com.oceanview.exception.BusinessException;
 import com.oceanview.exception.DAOException;
 import com.oceanview.util.ValidationUtil;
@@ -122,13 +121,8 @@ public class RoomService {
                 throw new BusinessException("Room type not found");
             }
 
-            List<Reservation> allReservations = reservationDAO.findAll();
-            long activeCount = allReservations.stream()
-                    .filter(r -> r.getRoomTypeId() == roomTypeId)
-                    .filter(r -> r.getStatus() == Reservation.ReservationStatus.PENDING
-                            || r.getStatus() == Reservation.ReservationStatus.CONFIRMED
-                            || r.getStatus() == Reservation.ReservationStatus.CHECKED_IN)
-                    .count();
+            // Use a targeted SQL COUNT instead of loading all reservations into memory
+            long activeCount = reservationDAO.countActiveByRoomType(roomTypeId);
 
             if (activeCount > 0) {
                 throw new BusinessException(

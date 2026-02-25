@@ -99,9 +99,9 @@ public class ReservationController extends BaseController {
 
             request.setAttribute("guests", guests);
 
-            // Load room types dynamically from the database
-            com.oceanview.dao.impl.RoomTypeDAOImpl roomTypeDAO = new com.oceanview.dao.impl.RoomTypeDAOImpl();
-            List<RoomType> roomTypes = roomTypeDAO.findAll();
+            // Load room types through the service layer (not direct DAO)
+            RoomService roomService = serviceFactory.getRoomService();
+            List<RoomType> roomTypes = roomService.getAllRoomTypes();
             request.setAttribute("roomTypes", roomTypes);
 
             forwardToView(request, response, "/WEB-INF/views/reservations/new.jsp");
@@ -109,10 +109,6 @@ public class ReservationController extends BaseController {
         } catch (BusinessException e) {
             LOGGER.log(Level.SEVERE, "Error loading reservation form", e);
             setErrorMessage(request, e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/reservations");
-        } catch (com.oceanview.exception.DAOException e) {
-            LOGGER.log(Level.SEVERE, "Error loading room types", e);
-            setErrorMessage(request, "Failed to load room types");
             response.sendRedirect(request.getContextPath() + "/reservations");
         }
     }
