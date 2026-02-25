@@ -32,6 +32,12 @@ public class ServiceFactory {
                 daoFactory.getPaymentDAO());
     }
 
+    public RoomService getRoomService() {
+        return new RoomService(
+                daoFactory.getRoomTypeDAO(),
+                daoFactory.getReservationDAO());
+    }
+
     public GuestService getGuestService() {
         return new GuestService(daoFactory.getGuestDAO());
     }
