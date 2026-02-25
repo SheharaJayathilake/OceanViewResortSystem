@@ -59,7 +59,7 @@ public class ReservationServiceTest {
         System.out.println("✓ testCreateReservationWithInvalidDates passed");
     }
 
-    @Test(expected = BusinessException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testCreateReservationWithCheckOutBeforeCheckIn() throws BusinessException {
         testReservation.setCheckInDate(LocalDate.now().plusDays(5));
         testReservation.setCheckOutDate(LocalDate.now().plusDays(3));

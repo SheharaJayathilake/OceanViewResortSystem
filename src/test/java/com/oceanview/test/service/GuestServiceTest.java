@@ -54,13 +54,13 @@ public class GuestServiceTest {
         }
     }
 
-    @Test(expected = BusinessException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRegisterGuestWithEmptyName() throws BusinessException {
         testGuest.setGuestName("");
         guestService.registerGuest(testGuest);
     }
 
-    @Test(expected = BusinessException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testRegisterGuestWithInvalidContact() throws BusinessException {
         testGuest.setContactNumber("123"); // Too short
         guestService.registerGuest(testGuest);
