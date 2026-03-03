@@ -1,14 +1,10 @@
 package com.oceanview.dao.impl;
 
-import com.oceanview.dao.BaseDAO;
 import com.oceanview.exception.DAOException;
 import com.oceanview.util.DatabaseConnectionManager;
 
 import java.math.BigDecimal;
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 

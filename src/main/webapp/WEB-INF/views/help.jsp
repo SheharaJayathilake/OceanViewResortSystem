@@ -5,7 +5,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Help & Documentation - Ocean View Resort</title>
+        <title>Help &amp; Documentation - Ocean View Resort</title>
         <link rel="stylesheet" href="${pageContext.request.contextPath}/css/style.css">
         <style>
             .help-section {
@@ -60,7 +60,7 @@
             <main class="main-content">
                 <div class="container">
                     <div class="page-header">
-                        <h1 class="page-title">HELP & DOCUMENTATION</h1>
+                        <h1 class="page-title">HELP &amp; DOCUMENTATION</h1>
                     </div>
 
                     <div class="card">
@@ -282,7 +282,7 @@
 
                     <!-- Reports -->
                     <div class="help-section">
-                        <h2>Reports & Analytics</h2>
+                        <h2>Reports &amp; Analytics</h2>
 
                         <h3>Available Reports</h3>
                         <ul>

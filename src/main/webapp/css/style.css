@@ -36,15 +36,28 @@ body {
 }
 
 /* Typography */
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
     font-weight: 600;
     line-height: 1.2;
     margin-bottom: var(--spacing-sm);
 }
 
-h1 { font-size: 2rem; }
-h2 { font-size: 1.5rem; }
-h3 { font-size: 1.25rem; }
+h1 {
+    font-size: 2rem;
+}
+
+h2 {
+    font-size: 1.5rem;
+}
+
+h3 {
+    font-size: 1.25rem;
+}
 
 a {
     color: var(--color-black);
@@ -54,6 +67,10 @@ a {
 
 a:hover {
     opacity: 0.7;
+}
+
+a.btn:hover {
+    opacity: 1;
 }
 
 /* Container */
@@ -150,7 +167,6 @@ a:hover {
 .btn:hover {
     background-color: var(--color-black);
     color: var(--color-white);
-    opacity: 1;
 }
 
 .btn-primary {
@@ -160,6 +176,7 @@ a:hover {
 
 .btn-primary:hover {
     background-color: var(--color-gray-800);
+    color: var(--color-white);
 }
 
 .btn-secondary {
@@ -168,8 +185,9 @@ a:hover {
 }
 
 .btn-secondary:hover {
-    background-color: var(--color-gray-100);
+    background-color: var(--color-gray-600);
     border-color: var(--color-gray-600);
+    color: var(--color-white);
 }
 
 .btn-sm {
@@ -292,11 +310,81 @@ textarea.form-control {
     border: 1px solid var(--color-black);
 }
 
-.badge-pending { background-color: var(--color-gray-200); }
-.badge-confirmed { background-color: var(--color-gray-400); color: var(--color-white); }
-.badge-checked-in { background-color: var(--color-gray-600); color: var(--color-white); }
-.badge-checked-out { background-color: var(--color-black); color: var(--color-white); }
-.badge-cancelled { background-color: var(--color-white); border-style: dashed; }
+.badge-pending {
+    background-color: var(--color-gray-200);
+}
+
+.badge-confirmed {
+    background-color: var(--color-gray-400);
+    color: var(--color-white);
+}
+
+.badge-checked-in {
+    background-color: var(--color-gray-600);
+    color: var(--color-white);
+}
+
+.badge-checked-out {
+    background-color: var(--color-black);
+    color: var(--color-white);
+}
+
+.badge-cancelled {
+    background-color: var(--color-white);
+    border-style: dashed;
+}
+
+/* Role & Status Badges */
+.badge-primary {
+    background-color: var(--color-black);
+    color: var(--color-white);
+}
+
+.badge-secondary {
+    background-color: var(--color-gray-200);
+    color: var(--color-gray-800);
+}
+
+.badge-warning {
+    background-color: var(--color-gray-400);
+    color: var(--color-black);
+}
+
+.badge-success {
+    background-color: var(--color-gray-600);
+    color: var(--color-white);
+}
+
+.badge-danger {
+    background-color: var(--color-white);
+    border: 2px dashed var(--color-gray-600);
+    color: var(--color-gray-600);
+}
+
+/* Button Variants for User Management */
+.btn-warning {
+    border-color: var(--color-gray-400);
+    background-color: var(--color-gray-200);
+    color: var(--color-gray-800);
+}
+
+.btn-warning:hover {
+    background-color: var(--color-gray-800);
+    border-color: var(--color-gray-800);
+    color: var(--color-white);
+}
+
+.btn-danger {
+    border-color: var(--color-black);
+    background-color: var(--color-white);
+    color: var(--color-black);
+}
+
+.btn-danger:hover {
+    background-color: var(--color-black);
+    border-color: var(--color-black);
+    color: var(--color-white);
+}
 
 /* Alerts */
 .alert {
@@ -384,17 +472,49 @@ textarea.form-control {
 }
 
 /* Utility Classes */
-.text-center { text-align: center; }
-.text-right { text-align: right; }
-.mt-1 { margin-top: var(--spacing-sm); }
-.mt-2 { margin-top: var(--spacing-md); }
-.mb-1 { margin-bottom: var(--spacing-sm); }
-.mb-2 { margin-bottom: var(--spacing-md); }
-.p-0 { padding: 0; }
-.d-flex { display: flex; }
-.justify-between { justify-content: space-between; }
-.align-center { align-items: center; }
-.gap-1 { gap: var(--spacing-sm); }
+.text-center {
+    text-align: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.mt-1 {
+    margin-top: var(--spacing-sm);
+}
+
+.mt-2 {
+    margin-top: var(--spacing-md);
+}
+
+.mb-1 {
+    margin-bottom: var(--spacing-sm);
+}
+
+.mb-2 {
+    margin-bottom: var(--spacing-md);
+}
+
+.p-0 {
+    padding: 0;
+}
+
+.d-flex {
+    display: flex;
+}
+
+.justify-between {
+    justify-content: space-between;
+}
+
+.align-center {
+    align-items: center;
+}
+
+.gap-1 {
+    gap: var(--spacing-sm);
+}
 
 /* Responsive */
 @media (max-width: 768px) {
@@ -402,16 +522,16 @@ textarea.form-control {
         flex-direction: column;
         gap: var(--spacing-sm);
     }
-    
+
     .nav {
         flex-wrap: wrap;
         justify-content: center;
     }
-    
+
     .form-row {
         grid-template-columns: 1fr;
     }
-    
+
     .table {
         font-size: 13px;
     }

@@ -47,4 +47,8 @@ public class ServiceFactory {
                 daoFactory.getReservationDAO(),
                 daoFactory.getGuestDAO());
     }
+
+    public UserService getUserService() {
+        return new UserService(daoFactory.getUserDAO());
+    }
 }

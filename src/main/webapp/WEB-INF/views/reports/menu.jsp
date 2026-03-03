@@ -15,7 +15,7 @@
             <main class="main-content">
                 <div class="container">
                     <div class="page-header">
-                        <h1 class="page-title">REPORTS & ANALYTICS</h1>
+                        <h1 class="page-title">REPORTS &amp; ANALYTICS</h1>
                     </div>
 
                     <div class="dashboard-grid">

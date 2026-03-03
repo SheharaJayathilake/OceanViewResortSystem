@@ -16,7 +16,10 @@
                                     <li><a href="${pageContext.request.contextPath}/guests">Guests</a></li>
                                     <li><a href="${pageContext.request.contextPath}/rooms">Rooms</a></li>
                                     <li><a href="${pageContext.request.contextPath}/reports">Reports</a></li>
-                                    <li><a href="${pageContext.request.contextPath}/help">Help</a></li>
+                                    <% if (currentUser !=null && "ADMIN" .equals(currentUser.getRole().name())) { %>
+                                        <li><a href="${pageContext.request.contextPath}/users">Users</a></li>
+                                        <% } %>
+                                            <li><a href="${pageContext.request.contextPath}/help">Help</a></li>
                                 </ul>
                             </nav>
 

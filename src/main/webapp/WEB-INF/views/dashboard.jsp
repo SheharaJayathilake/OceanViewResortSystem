@@ -75,6 +75,13 @@
                                                             class="btn btn-secondary">
                                                             Generate Reports
                                                         </a>
+                                                        <% if (currentUser !=null && "ADMIN"
+                                                            .equals(currentUser.getRole().name())) { %>
+                                                            <a href="${pageContext.request.contextPath}/users"
+                                                                class="btn btn-secondary">
+                                                                Manage Users
+                                                            </a>
+                                                            <% } %>
                                                     </div>
                                                 </div>
                                             </div>
