@@ -96,17 +96,16 @@ public class ReservationController extends BaseController {
         try {
             GuestService guestService = serviceFactory.getGuestService();
             List<Guest> guests = guestService.getAllGuests();
-
             request.setAttribute("guests", guests);
 
-            // Load room types through the service layer (not direct DAO)
+            // Load only active rooms for selection
             RoomService roomService = serviceFactory.getRoomService();
-            List<RoomType> roomTypes = roomService.getAllRoomTypes();
-            request.setAttribute("roomTypes", roomTypes);
+            List<Room> rooms = roomService.getAllActiveRooms();
+            request.setAttribute("rooms", rooms);
 
             forwardToView(request, response, "/WEB-INF/views/reservations/new.jsp");
 
-        } catch (BusinessException e) {
+        } catch (Exception e) {
             LOGGER.log(Level.SEVERE, "Error loading reservation form", e);
             setErrorMessage(request, e.getMessage());
             response.sendRedirect(request.getContextPath() + "/reservations");
@@ -122,16 +121,16 @@ public class ReservationController extends BaseController {
         try {
             // Parse form data
             Integer guestId = Integer.parseInt(request.getParameter("guestId"));
-            Integer roomTypeId = Integer.parseInt(request.getParameter("roomTypeId"));
+            Integer roomId = Integer.parseInt(request.getParameter("roomId"));
             LocalDate checkInDate = LocalDate.parse(request.getParameter("checkInDate"));
             LocalDate checkOutDate = LocalDate.parse(request.getParameter("checkOutDate"));
             Integer numberOfGuests = Integer.parseInt(request.getParameter("numberOfGuests"));
             String specialRequests = request.getParameter("specialRequests");
 
-            // Create reservation object
+            // Create reservation — roomTypeId is derived from room in the service layer
             Reservation reservation = new Reservation();
             reservation.setGuestId(guestId);
-            reservation.setRoomTypeId(roomTypeId);
+            reservation.setRoomId(roomId);
             reservation.setCheckInDate(checkInDate);
             reservation.setCheckOutDate(checkOutDate);
             reservation.setNumberOfGuests(numberOfGuests);

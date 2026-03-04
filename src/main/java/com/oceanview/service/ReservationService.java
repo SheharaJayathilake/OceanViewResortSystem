@@ -26,15 +26,18 @@ public class ReservationService {
     private final GuestDAOImpl guestDAO;
     private final RoomTypeDAOImpl roomTypeDAO;
     private final PaymentDAOImpl paymentDAO;
+    private final RoomDAOImpl roomDAO;
 
     public ReservationService(ReservationDAOImpl reservationDAO,
             GuestDAOImpl guestDAO,
             RoomTypeDAOImpl roomTypeDAO,
-            PaymentDAOImpl paymentDAO) {
+            PaymentDAOImpl paymentDAO,
+            RoomDAOImpl roomDAO) {
         this.reservationDAO = reservationDAO;
         this.guestDAO = guestDAO;
         this.roomTypeDAO = roomTypeDAO;
         this.paymentDAO = paymentDAO;
+        this.roomDAO = roomDAO;
     }
 
     /**
@@ -55,29 +58,50 @@ public class ReservationService {
                 throw new BusinessException("Guest not found. Please register guest first.");
             }
 
+            // Look up the selected room and derive type
+            if (reservation.getRoomId() == null) {
+                throw new BusinessException("Please select a room.");
+            }
+
+            Optional<Room> selectedRoom = roomDAO.findById(reservation.getRoomId());
+            if (!selectedRoom.isPresent()) {
+                throw new BusinessException("Selected room not found.");
+            }
+
+            Room room = selectedRoom.get();
+
+            if (!room.isActive()) {
+                throw new BusinessException("Selected room is not active.");
+            }
+
+            // Derive roomTypeId from the room
+            reservation.setRoomTypeId(room.getRoomTypeId());
+
             Optional<RoomType> roomType = roomTypeDAO.findById(reservation.getRoomTypeId());
             if (!roomType.isPresent()) {
-                throw new BusinessException("Invalid room type selected");
+                throw new BusinessException("Invalid room type for the selected room.");
             }
 
             if (!roomType.get().isAvailable()) {
-                throw new BusinessException("Selected room type is currently unavailable");
-            }
-
-            boolean isAvailable = reservationDAO.checkAvailability(
-                    reservation.getRoomTypeId(),
-                    reservation.getCheckInDate(),
-                    reservation.getCheckOutDate());
-
-            if (!isAvailable) {
-                throw new BusinessException(
-                        "Room type not available for selected dates. Please choose different dates.");
+                throw new BusinessException("The room type for the selected room is currently unavailable.");
             }
 
             if (reservation.getNumberOfGuests() > roomType.get().getCapacity()) {
                 throw new BusinessException(
                         String.format("Number of guests (%d) exceeds room capacity (%d)",
                                 reservation.getNumberOfGuests(), roomType.get().getCapacity()));
+            }
+
+            // Double-booking prevention: check this specific room's availability
+            boolean available = roomDAO.isRoomAvailable(
+                    room.getRoomId(),
+                    reservation.getCheckInDate(),
+                    reservation.getCheckOutDate());
+
+            if (!available) {
+                throw new BusinessException(
+                        "Room " + room.getRoomNumber() + " is already booked for the selected dates. " +
+                                "Please choose a different room or different dates.");
             }
 
             reservation.setReservationNumber(ReservationNumberGenerator.generate());
@@ -90,9 +114,10 @@ public class ReservationService {
 
             Reservation createdReservation = reservationDAO.create(reservation);
 
-            LOGGER.info(String.format("Reservation created: %s for guest %d, Amount: %.2f",
+            LOGGER.info(String.format("Reservation created: %s for guest %d, Room %s, Amount: %.2f",
                     createdReservation.getReservationNumber(),
                     createdReservation.getGuestId(),
+                    room.getRoomNumber(),
                     createdReservation.getTotalAmount()));
 
             return createdReservation;
@@ -367,8 +392,8 @@ public class ReservationService {
             throw new BusinessException("Guest information is required");
         }
 
-        if (reservation.getRoomTypeId() == null) {
-            throw new BusinessException("Room type selection is required");
+        if (reservation.getRoomId() == null) {
+            throw new BusinessException("Room selection is required");
         }
 
         if (!ValidationUtil.isValidDateRange(

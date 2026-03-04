@@ -26,14 +26,45 @@ public class ReservationServiceTest {
         GuestDAOImpl guestDAO = new GuestDAOImpl();
         RoomTypeDAOImpl roomTypeDAO = new RoomTypeDAOImpl();
         com.oceanview.dao.impl.PaymentDAOImpl paymentDAO = new com.oceanview.dao.impl.PaymentDAOImpl();
+        RoomDAOImpl roomDAO = new RoomDAOImpl();
 
-        reservationService = new ReservationService(reservationDAO, guestDAO, roomTypeDAO, paymentDAO);
+        reservationService = new ReservationService(reservationDAO, guestDAO, roomTypeDAO, paymentDAO, roomDAO);
 
         testReservation = new Reservation();
-        testReservation.setGuestId(1);
-        testReservation.setRoomTypeId(1);
-        testReservation.setCheckInDate(LocalDate.now().plusDays(1));
-        testReservation.setCheckOutDate(LocalDate.now().plusDays(3));
+
+        try {
+            // Create a unique guest for the test
+            Guest newGuest = new Guest();
+            newGuest.setGuestName("Test Guest " + System.currentTimeMillis());
+            newGuest.setContactNumber("07" + (System.currentTimeMillis() % 100000000));
+            newGuest.setAddress("123 Test Street");
+            newGuest.setEmail("testguest" + System.currentTimeMillis() + "@example.com");
+            newGuest.setIdentificationType("NIC");
+            newGuest.setIdentificationNumber("ID" + System.currentTimeMillis());
+            Guest savedGuest = guestDAO.create(newGuest);
+            testReservation.setGuestId(savedGuest.getGuestId());
+
+            // Get or create a room type to assign
+            java.util.List<RoomType> types = roomTypeDAO.findAll();
+            Integer typeId = types.isEmpty() ? 1 : types.get(0).getRoomTypeId();
+
+            // Create a unique room for the test
+            Room newRoom = new Room();
+            newRoom.setRoomNumber("T" + (System.currentTimeMillis() % 10000));
+            newRoom.setRoomTypeId(typeId);
+            newRoom.setFloor(1);
+            newRoom.setActive(true);
+            Room savedRoom = roomDAO.create(newRoom);
+
+            testReservation.setRoomId(savedRoom.getRoomId());
+        } catch (Exception e) {
+            testReservation.setGuestId(1);
+            testReservation.setRoomId(101);
+        }
+
+        // Use dates far in the future to avoid conflicting with existing DB records
+        testReservation.setCheckInDate(LocalDate.now().plusDays(400));
+        testReservation.setCheckOutDate(LocalDate.now().plusDays(402));
         testReservation.setNumberOfGuests(2);
         testReservation.setCreatedBy(1);
     }

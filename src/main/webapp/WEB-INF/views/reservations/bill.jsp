@@ -328,10 +328,14 @@
                                                                     <td>
                                                                         <strong>
                                                                             <%= roomType.getTypeName() %> Room
+                                                                                <% if (reservation.getRoomNumber()
+                                                                                    !=null) { %>
+                                                                                    (<%= reservation.getRoomNumber() %>)
+                                                                                        <% } %>
                                                                         </strong><br>
                                                                         <small>Check-in: <%=
                                                                                 reservation.getCheckInDate() %>
-                                                                                </small><br>
+                                                                        </small><br>
                                                                         <small>Check-out: <%=
                                                                                 reservation.getCheckOutDate() %></small>
                                                                     </td>

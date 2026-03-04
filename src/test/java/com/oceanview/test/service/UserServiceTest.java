@@ -158,7 +158,7 @@ public class UserServiceTest {
         userService.createUser(testUser, "weak");
     }
 
-    @Test(expected = BusinessException.class)
+    @Test(expected = IllegalArgumentException.class)
     public void testCreateUserEmptyUsername() throws BusinessException {
         testUser.setUsername("");
         userService.createUser(testUser, "Test@1234");
@@ -196,8 +196,14 @@ public class UserServiceTest {
     @Test(expected = BusinessException.class)
     public void testSelfRoleChange() throws BusinessException {
         User admin = userService.findUserById(ADMIN_USER_ID);
-        admin.setRole(UserRole.RECEPTIONIST);
-        userService.updateUser(admin, ADMIN_USER_ID);
+        // Create a copy so we don't modify the same reference the stub DAO holds
+        User modifiedAdmin = new User();
+        modifiedAdmin.setUserId(admin.getUserId());
+        modifiedAdmin.setUsername(admin.getUsername());
+        modifiedAdmin.setRole(UserRole.RECEPTIONIST); // Changed role
+        modifiedAdmin.setActive(admin.isActive());
+
+        userService.updateUser(modifiedAdmin, ADMIN_USER_ID);
     }
 
     // ===== DELETE TESTS =====

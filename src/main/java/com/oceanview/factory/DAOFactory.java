@@ -38,4 +38,8 @@ public class DAOFactory {
     public PaymentDAOImpl getPaymentDAO() {
         return new PaymentDAOImpl();
     }
+
+    public RoomDAOImpl getRoomDAO() {
+        return new RoomDAOImpl();
+    }
 }

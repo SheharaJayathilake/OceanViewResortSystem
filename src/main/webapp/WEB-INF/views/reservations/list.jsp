@@ -55,6 +55,7 @@
                                                                                     <th>Reservation #</th>
                                                                                     <th>Guest Name</th>
                                                                                     <th>Room Type</th>
+                                                                                    <th>Room</th>
                                                                                     <th>Check-in</th>
                                                                                     <th>Check-out</th>
                                                                                     <th>Status</th>
@@ -80,6 +81,12 @@
                                                                                             <%= reservation.getRoomType()
                                                                                                 !=null ?
                                                                                                 reservation.getRoomType().getTypeName()
+                                                                                                : "N/A" %>
+                                                                                        </td>
+                                                                                        <td>
+                                                                                            <%= reservation.getRoomNumber()
+                                                                                                !=null ?
+                                                                                                reservation.getRoomNumber()
                                                                                                 : "N/A" %>
                                                                                         </td>
                                                                                         <td>

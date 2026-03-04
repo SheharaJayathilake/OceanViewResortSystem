@@ -1,7 +1,9 @@
 package com.oceanview.service;
 
 import com.oceanview.dao.impl.RoomTypeDAOImpl;
+import com.oceanview.dao.impl.RoomDAOImpl;
 import com.oceanview.dao.impl.ReservationDAOImpl;
+import com.oceanview.model.Room;
 import com.oceanview.model.RoomType;
 import com.oceanview.exception.BusinessException;
 import com.oceanview.exception.DAOException;
@@ -22,10 +24,12 @@ public class RoomService {
     private static final Logger LOGGER = Logger.getLogger(RoomService.class.getName());
 
     private final RoomTypeDAOImpl roomTypeDAO;
+    private final RoomDAOImpl roomDAO;
     private final ReservationDAOImpl reservationDAO;
 
-    public RoomService(RoomTypeDAOImpl roomTypeDAO, ReservationDAOImpl reservationDAO) {
+    public RoomService(RoomTypeDAOImpl roomTypeDAO, RoomDAOImpl roomDAO, ReservationDAOImpl reservationDAO) {
         this.roomTypeDAO = roomTypeDAO;
+        this.roomDAO = roomDAO;
         this.reservationDAO = reservationDAO;
     }
 
@@ -38,6 +42,149 @@ public class RoomService {
         } catch (DAOException e) {
             LOGGER.log(Level.SEVERE, "Error fetching room types", e);
             throw new BusinessException("Failed to retrieve room types: " + e.getMessage());
+        }
+    }
+
+    /** Retrieve all active rooms with their room types populated. */
+    public List<Room> getAllRooms() throws BusinessException {
+        try {
+            return roomDAO.findAll();
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Error fetching rooms", e);
+            throw new BusinessException("Failed to retrieve rooms: " + e.getMessage());
+        }
+    }
+
+    /** Retrieve rooms belonging to a specific room type. */
+    public List<Room> getRoomsByType(int roomTypeId) throws BusinessException {
+        try {
+            return roomDAO.findByRoomType(roomTypeId);
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Error fetching rooms for type: " + roomTypeId, e);
+            throw new BusinessException("Failed to retrieve rooms: " + e.getMessage());
+        }
+    }
+
+    /** Find a single room by ID. */
+    public Room findRoomById(int roomId) throws BusinessException {
+        try {
+            return roomDAO.findById(roomId)
+                    .orElseThrow(() -> new BusinessException("Room not found with ID: " + roomId));
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Error finding room", e);
+            throw new BusinessException("Failed to find room: " + e.getMessage());
+        }
+    }
+
+    /** Get only active rooms (for reservation dropdown). */
+    public List<Room> getAllActiveRooms() throws BusinessException {
+        try {
+            return roomDAO.findAllActive();
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Error fetching active rooms", e);
+            throw new BusinessException("Failed to retrieve active rooms: " + e.getMessage());
+        }
+    }
+
+    /** Create a new room with validation. */
+    public Room createRoom(String roomNumber, int roomTypeId, int floor, boolean isActive) throws BusinessException {
+        validateRoomInput(roomNumber, roomTypeId, floor);
+        checkDuplicateRoomNumber(roomNumber, null);
+
+        try {
+            Room room = new Room();
+            room.setRoomNumber(roomNumber.trim());
+            room.setRoomTypeId(roomTypeId);
+            room.setFloor(floor);
+            room.setActive(isActive);
+
+            Room created = roomDAO.create(room);
+            LOGGER.info("Room created: " + created.getRoomNumber());
+            return created;
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Error creating room", e);
+            throw new BusinessException("Failed to create room: " + e.getMessage());
+        }
+    }
+
+    /** Update an existing room. */
+    public boolean updateRoom(int roomId, String roomNumber, int roomTypeId, int floor, boolean isActive)
+            throws BusinessException {
+        validateRoomInput(roomNumber, roomTypeId, floor);
+        checkDuplicateRoomNumber(roomNumber, roomId);
+
+        try {
+            Room room = roomDAO.findById(roomId)
+                    .orElseThrow(() -> new BusinessException("Room not found"));
+            room.setRoomNumber(roomNumber.trim());
+            room.setRoomTypeId(roomTypeId);
+            room.setFloor(floor);
+            room.setActive(isActive);
+
+            boolean updated = roomDAO.update(room);
+            if (updated) {
+                LOGGER.info("Room updated: " + roomNumber);
+            }
+            return updated;
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Error updating room", e);
+            throw new BusinessException("Failed to update room: " + e.getMessage());
+        }
+    }
+
+    /** Delete a room only if it has no active reservations. */
+    public boolean deleteRoom(int roomId) throws BusinessException {
+        try {
+            Room room = roomDAO.findById(roomId)
+                    .orElseThrow(() -> new BusinessException("Room not found"));
+
+            int activeCount = roomDAO.countActiveReservations(roomId);
+            if (activeCount > 0) {
+                throw new BusinessException(
+                        "Cannot delete room '" + room.getRoomNumber() + "' — it has " +
+                                activeCount + " active reservation(s). Cancel or check out all reservations first.");
+            }
+
+            boolean deleted = roomDAO.delete(roomId);
+            if (deleted) {
+                LOGGER.info("Room deleted: " + room.getRoomNumber());
+            }
+            return deleted;
+        } catch (DAOException e) {
+            LOGGER.log(Level.SEVERE, "Error deleting room", e);
+            throw new BusinessException("Failed to delete room: " + e.getMessage());
+        }
+    }
+
+    private void validateRoomInput(String roomNumber, int roomTypeId, int floor) throws BusinessException {
+        if (!ValidationUtil.isNotEmpty(roomNumber)) {
+            throw new BusinessException("Room number is required");
+        }
+        if (roomNumber.trim().length() > 10) {
+            throw new BusinessException("Room number cannot exceed 10 characters");
+        }
+        if (floor < 0 || floor > 100) {
+            throw new BusinessException("Floor must be between 0 and 100");
+        }
+        try {
+            roomTypeDAO.findById(roomTypeId)
+                    .orElseThrow(() -> new BusinessException("Selected room type does not exist"));
+        } catch (DAOException e) {
+            throw new BusinessException("Failed to validate room type: " + e.getMessage());
+        }
+    }
+
+    private void checkDuplicateRoomNumber(String roomNumber, Integer excludeId) throws BusinessException {
+        try {
+            List<Room> all = roomDAO.findAll();
+            boolean duplicate = all.stream()
+                    .filter(r -> excludeId == null || !r.getRoomId().equals(excludeId))
+                    .anyMatch(r -> r.getRoomNumber().equalsIgnoreCase(roomNumber.trim()));
+            if (duplicate) {
+                throw new BusinessException("A room with number '" + roomNumber.trim() + "' already exists");
+            }
+        } catch (DAOException e) {
+            throw new BusinessException("Failed to validate room number: " + e.getMessage());
         }
     }
 

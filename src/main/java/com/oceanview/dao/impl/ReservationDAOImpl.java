@@ -3,6 +3,7 @@ package com.oceanview.dao.impl;
 import com.oceanview.dao.BaseDAO;
 import com.oceanview.model.Reservation;
 import com.oceanview.model.Guest;
+import com.oceanview.model.Room;
 import com.oceanview.model.RoomType;
 import com.oceanview.exception.DAOException;
 import com.oceanview.util.DatabaseConnectionManager;
@@ -23,24 +24,27 @@ public class ReservationDAOImpl implements BaseDAO<Reservation, Integer> {
 
     private static final String INSERT_RESERVATION = "INSERT INTO reservations (reservation_number, guest_id, room_type_id, "
             +
-            "check_in_date, check_out_date, number_of_guests, status, payment_status, " +
-            "total_amount, special_requests, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            "room_id, check_in_date, check_out_date, number_of_guests, status, payment_status, " +
+            "total_amount, special_requests, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
     private static final String SELECT_BY_ID_WITH_DETAILS = "SELECT r.*, g.guest_name, g.contact_number, g.email, " +
-            "rt.type_name, rt.rate_per_night, rt.capacity " +
+            "rt.type_name, rt.rate_per_night, rt.capacity, rm.room_number " +
             "FROM reservations r " +
             "JOIN guests g ON r.guest_id = g.guest_id " +
             "JOIN room_types rt ON r.room_type_id = rt.room_type_id " +
+            "LEFT JOIN rooms rm ON r.room_id = rm.room_id " +
             "WHERE r.reservation_id = ?";
 
     private static final String SELECT_BY_RESERVATION_NUMBER = "SELECT r.*, g.guest_name, g.contact_number, g.email, " +
-            "rt.type_name, rt.rate_per_night, rt.capacity " +
+            "rt.type_name, rt.rate_per_night, rt.capacity, rm.room_number " +
             "FROM reservations r " +
             "JOIN guests g ON r.guest_id = g.guest_id " +
             "JOIN room_types rt ON r.room_type_id = rt.room_type_id " +
+            "LEFT JOIN rooms rm ON r.room_id = rm.room_id " +
             "WHERE r.reservation_number = ?";
 
-    private static final String UPDATE_RESERVATION = "UPDATE reservations SET room_type_id = ?, check_in_date = ?, " +
+    private static final String UPDATE_RESERVATION = "UPDATE reservations SET room_type_id = ?, room_id = ?, check_in_date = ?, "
+            +
             "check_out_date = ?, number_of_guests = ?, status = ?, payment_status = ?, " +
             "total_amount = ?, special_requests = ? WHERE reservation_id = ?";
 
@@ -65,14 +69,21 @@ public class ReservationDAOImpl implements BaseDAO<Reservation, Integer> {
             pstmt.setString(1, reservation.getReservationNumber());
             pstmt.setInt(2, reservation.getGuestId());
             pstmt.setInt(3, reservation.getRoomTypeId());
-            pstmt.setDate(4, Date.valueOf(reservation.getCheckInDate()));
-            pstmt.setDate(5, Date.valueOf(reservation.getCheckOutDate()));
-            pstmt.setInt(6, reservation.getNumberOfGuests());
-            pstmt.setString(7, reservation.getStatus().name());
-            pstmt.setString(8, reservation.getPaymentStatus().name());
-            pstmt.setBigDecimal(9, reservation.getTotalAmount());
-            pstmt.setString(10, reservation.getSpecialRequests());
-            pstmt.setInt(11, reservation.getCreatedBy());
+
+            if (reservation.getRoomId() != null) {
+                pstmt.setInt(4, reservation.getRoomId());
+            } else {
+                pstmt.setNull(4, Types.INTEGER);
+            }
+
+            pstmt.setDate(5, Date.valueOf(reservation.getCheckInDate()));
+            pstmt.setDate(6, Date.valueOf(reservation.getCheckOutDate()));
+            pstmt.setInt(7, reservation.getNumberOfGuests());
+            pstmt.setString(8, reservation.getStatus().name());
+            pstmt.setString(9, reservation.getPaymentStatus().name());
+            pstmt.setBigDecimal(10, reservation.getTotalAmount());
+            pstmt.setString(11, reservation.getSpecialRequests());
+            pstmt.setInt(12, reservation.getCreatedBy());
 
             int affectedRows = pstmt.executeUpdate();
 
@@ -301,6 +312,11 @@ public class ReservationDAOImpl implements BaseDAO<Reservation, Integer> {
         reservation.setSpecialRequests(rs.getString("special_requests"));
         reservation.setCreatedBy(rs.getInt("created_by"));
 
+        int roomId = rs.getInt("room_id");
+        if (!rs.wasNull()) {
+            reservation.setRoomId(roomId);
+        }
+
         // Map Guest details if available in ResultSet
         try {
             String guestName = rs.getString("guest_name");
@@ -328,7 +344,18 @@ public class ReservationDAOImpl implements BaseDAO<Reservation, Integer> {
                 reservation.setRoomType(roomType);
             }
         } catch (SQLException ignored) {
-            // Column might not exist in some queries
+        }
+
+        // Map Room details if available
+        try {
+            String roomNumber = rs.getString("room_number");
+            if (roomNumber != null && reservation.getRoomId() != null) {
+                Room room = new Room();
+                room.setRoomId(reservation.getRoomId());
+                room.setRoomNumber(roomNumber);
+                reservation.setRoom(room);
+            }
+        } catch (SQLException ignored) {
         }
 
         return reservation;
@@ -364,10 +391,11 @@ public class ReservationDAOImpl implements BaseDAO<Reservation, Integer> {
         ResultSet rs = null;
 
         String query = "SELECT r.*, g.guest_name, g.contact_number, g.email, " +
-                "rt.type_name, rt.rate_per_night, rt.capacity " +
+                "rt.type_name, rt.rate_per_night, rt.capacity, rm.room_number " +
                 "FROM reservations r " +
                 "JOIN guests g ON r.guest_id = g.guest_id " +
                 "JOIN room_types rt ON r.room_type_id = rt.room_type_id " +
+                "LEFT JOIN rooms rm ON r.room_id = rm.room_id " +
                 "ORDER BY r.created_at DESC";
 
         try {
@@ -407,14 +435,21 @@ public class ReservationDAOImpl implements BaseDAO<Reservation, Integer> {
             pstmt = conn.prepareStatement(UPDATE_RESERVATION);
 
             pstmt.setInt(1, reservation.getRoomTypeId());
-            pstmt.setDate(2, Date.valueOf(reservation.getCheckInDate()));
-            pstmt.setDate(3, Date.valueOf(reservation.getCheckOutDate()));
-            pstmt.setInt(4, reservation.getNumberOfGuests());
-            pstmt.setString(5, reservation.getStatus().name());
-            pstmt.setString(6, reservation.getPaymentStatus().name());
-            pstmt.setBigDecimal(7, reservation.getTotalAmount());
-            pstmt.setString(8, reservation.getSpecialRequests());
-            pstmt.setInt(9, reservation.getReservationId());
+
+            if (reservation.getRoomId() != null) {
+                pstmt.setInt(2, reservation.getRoomId());
+            } else {
+                pstmt.setNull(2, Types.INTEGER);
+            }
+
+            pstmt.setDate(3, Date.valueOf(reservation.getCheckInDate()));
+            pstmt.setDate(4, Date.valueOf(reservation.getCheckOutDate()));
+            pstmt.setInt(5, reservation.getNumberOfGuests());
+            pstmt.setString(6, reservation.getStatus().name());
+            pstmt.setString(7, reservation.getPaymentStatus().name());
+            pstmt.setBigDecimal(8, reservation.getTotalAmount());
+            pstmt.setString(9, reservation.getSpecialRequests());
+            pstmt.setInt(10, reservation.getReservationId());
 
             int affectedRows = pstmt.executeUpdate();
 

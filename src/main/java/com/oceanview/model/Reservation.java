@@ -16,6 +16,7 @@ public class Reservation extends BaseModel {
     private String reservationNumber;
     private Integer guestId;
     private Integer roomTypeId;
+    private Integer roomId;
     private LocalDate checkInDate;
     private LocalDate checkOutDate;
     private Integer numberOfGuests;
@@ -27,6 +28,7 @@ public class Reservation extends BaseModel {
 
     private Guest guest;
     private RoomType roomType;
+    private Room room;
 
     public enum ReservationStatus {
         PENDING, CONFIRMED, CHECKED_IN, CHECKED_OUT, CANCELLED
@@ -73,6 +75,21 @@ public class Reservation extends BaseModel {
 
     public void setRoomTypeId(Integer roomTypeId) {
         this.roomTypeId = roomTypeId;
+    }
+
+    public Integer getRoomId() {
+        return roomId;
+    }
+
+    public void setRoomId(Integer roomId) {
+        this.roomId = roomId;
+    }
+
+    public String getRoomNumber() {
+        if (room != null) {
+            return room.getRoomNumber();
+        }
+        return null;
     }
 
     public LocalDate getCheckInDate() {
@@ -165,6 +182,14 @@ public class Reservation extends BaseModel {
 
     public void setRoomType(RoomType roomType) {
         this.roomType = roomType;
+    }
+
+    public Room getRoom() {
+        return room;
+    }
+
+    public void setRoom(Room room) {
+        this.room = room;
     }
 
     public long getNumberOfNights() {

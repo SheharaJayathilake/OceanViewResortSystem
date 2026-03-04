@@ -105,6 +105,13 @@
                                                                                                 <%= roomType.getTypeName()
                                                                                                     %>
                                                                                             </p>
+                                                                                            <p><strong>Room
+                                                                                                    Number:</strong>
+                                                                                                <%= reservation.getRoomNumber()
+                                                                                                    !=null ?
+                                                                                                    reservation.getRoomNumber()
+                                                                                                    : "Not assigned" %>
+                                                                                            </p>
                                                                                             <p><strong>Rate:</strong>
                                                                                                 LKR <%=
                                                                                                     String.format("%.2f",
